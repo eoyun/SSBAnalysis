@@ -66,6 +66,7 @@ int main(int argc, char **argv)
    printf("Turn On or Off GenLoop : %d\n", genLoop_on);
    cout << "dkdkdk" << genLoop_on << endl;
    
+   string sampleName = argv[4]; 
 //   char *logfile = argv[4];
 //   printf("Output Log File Name = %s.txt\n",logfile);
 /*   Bool_t trigger_pass_on =false;
@@ -138,7 +139,7 @@ int main(int argc, char **argv)
       
       ssb->SetOutputFileName(outname);
       ssb->Start( genLoop_on );
-      ssb->Loop( flist );
+      ssb->Loop( flist ,sampleName);
       ssb->End();
 
    }
@@ -147,7 +148,7 @@ int main(int argc, char **argv)
       
       ssb->SetOutputFileName(outname);
       ssb->Start( genLoop_on );
-      ssb->Loop( flist );
+      ssb->Loop( flist ,sampleName);
       ssb->End();
       
    }
