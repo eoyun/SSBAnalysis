@@ -92,14 +92,14 @@ def MakeSeparateList(NumFiles, NumJob):
 
 #Make_CondorScr("SingleNeutrino_v1",40,40)
 if __name__ == '__main__':
-    Study = "Test_v17"
+    Study = "Test_v20"
     #Make_CondorScr("TTJets_Signal",Study,20,10)
     Make_CondorScr("TTJets_others",Study,621,100)
     Make_CondorScr("DYJetsToLL_M_50",Study,732,100)
     Make_CondorScr("ST_tW_antitop",Study,70,70)
     Make_CondorScr("ST_tW_top",Study,71,71)
     Make_CondorScr("DYJetsToLL_M_10To50",Study,178,100)
-    Make_CondorScr("WJetsToLNu",Study,121,100)
+    Make_CondorScr("WJetsToLNu",Study,120,100)
     Make_CondorScr("TTbar_WJetToLNu",Study,22,22)
     Make_CondorScr("TTbar_WQQ",Study,4,4)
     Make_CondorScr("TTbar_ZToLLNuNu",Study,56,56)
@@ -107,5 +107,21 @@ if __name__ == '__main__':
     Make_CondorScr("ZZ",Study,21,21)
     Make_CondorScr("WW",Study,81,81)
     Make_CondorScr("WZ",Study,41,41)
-
     Make_CondorScr("TTJets_Signal",Study,621,621)
+
+    Make_CondorScr("Data_DoubleEG_Run2016B",Study,264,100)
+    Make_CondorScr("Data_DoubleEG_Run2016C",Study,87,87)
+    Make_CondorScr("Data_DoubleEG_Run2016D",Study,146,100)
+    Make_CondorScr("Data_DoubleEG_Run2016E",Study,124,100)
+    Make_CondorScr("Data_DoubleEG_Run2016F",Study,91,91)
+    Make_CondorScr("Data_DoubleEG_Run2016G",Study,214,100)
+    Make_CondorScr("Data_DoubleEG_Run2016HV2",Study,232,100)
+    Make_CondorScr("Data_DoubleEG_Run2016HV3",Study,7,7)
+    Make_CondorScr("Data_SingleElectron_Run2016B",Study,1055,100)
+    Make_CondorScr("Data_SingleElectron_Run2016C",Study,348,87)
+    Make_CondorScr("Data_SingleElectron_Run2016D",Study,584,100)
+    Make_CondorScr("Data_SingleElectron_Run2016E",Study,496,100)
+    Make_CondorScr("Data_SingleElectron_Run2016F",Study,359,91)
+    Make_CondorScr("Data_SingleElectron_Run2016G",Study,854,100)
+    Make_CondorScr("Data_SingleElectron_Run2016HV2",Study,925,100)
+    Make_CondorScr("Data_SingleElectron_Run2016HV3",Study,25,7)

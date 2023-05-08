@@ -134,6 +134,11 @@ class ssb_analysis : public SSBTree
       TH1D *h_cf_jetphi_sub; 
       TH1D *h_cf_ele_invm; 
       TH1D *h_cf_pu_intime;
+      TH1D *h_cf_pu_pv;
+      TH1D *h_cf_pu_interaction;
+      TH1D *h_cf_pu_intime_w;
+      TH1D *h_cf_pu_pv_w;
+      TH1D *h_cf_pu_interaction_w;
       TH1D *h_cf_PVcount;
 };
 #endif

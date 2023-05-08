@@ -1,0 +1,3 @@
+AnalysisCode/output/*
+AnalysisCode/Batch/Test*
+*.o

@@ -27,6 +27,10 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
    if (fChain == 0) return;
    //////////
    crosssection =1.;
+   int isData=0;
+   int isSingle=0;
+   vector<TLorentzVector> TightEle;
+   vector<TLorentzVector> TightMuon;
    if (sampleName.find("TTJets_Signal")!=string::npos) crosssection = 831.76E-12;
    if (sampleName.find("TTJets_others")!=string::npos) crosssection = 831.76E-12;
    if (sampleName.find("DYJetsToLL_M_10To50")!=string::npos) crosssection = 18810.0E-12;
@@ -42,6 +46,9 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
    if (sampleName.find("ZZ")!=string::npos) crosssection = 31.8E-12;
    if (sampleName.find("WJetsToLNu")!=string::npos) crosssection = 61526E-12;
 
+   if (sampleName.find("Data")!=string::npos) isData=1;
+   if (sampleName.find("Single")!=string::npos) isSingle=1;
+   cout<<"dgb"<<endl;
 
 
    luminosity = 35.9;
@@ -65,14 +72,17 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
    int muon_eta_0 =0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) 
    {
-      double w_pileup = puweight->weight(PileUp_Count_Intime);
+      double w_pileup = puweight->weight(PileUp_Count_Intime)*Gen_EventWeight;
+      if (isData) w_pileup=1.;
       Long64_t ientry = LoadTree(jentry);
       if (ientry < 0)
       {
          printf("ERROR: Could not load tree!!!\n");
          break;
       }
-
+      TightEle.clear();
+      TightMuon.clear();
+  
       nb = fChain->GetEntry(jentry);   nbytes += nb;
       int trigger_flag_mumu =0;
       int trigger_flag_elmu =0;
@@ -85,25 +95,55 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
       " size of Trigger isPass : "<<Trigger_isPass->size()<< 
       " size of Trigger isRun : "<<Trigger_isRun->size()<<endl;*/
       //cout << "evt num "<<jentry<<endl;
-      FillHisto(h_cf_pu_intime, w_pileup);
+      FillHisto(h_cf_pu_intime, PileUp_Count_Intime,Gen_EventWeight);
+      FillHisto(h_cf_pu_pv, PV_Count,Gen_EventWeight);
+      FillHisto(h_cf_pu_interaction, PileUp_Count_Interaction,Gen_EventWeight);
+      FillHisto(h_cf_pu_intime_w, PileUp_Count_Intime,w_pileup);
+      FillHisto(h_cf_pu_pv_w, PV_Count,w_pileup);
+      FillHisto(h_cf_pu_interaction_w, PileUp_Count_Interaction,w_pileup);
+      //cout<<isData<<endl;
       if (sampleName.find("TTJets_Signal")!=string::npos && Channel_Idx != 22) continue;
       if (sampleName.find("TTJets_others")!=string::npos && Channel_Idx == 22) continue;
-      for(int i=0;i < Trigger_Name->size();i++){
-	if (Trigger_Name->at(i).find("HLT_IsoMu24_v")!=string::npos){ trigger_flag_elmu+=Trigger_isPass->at(i); trigger_flag_mumu+=Trigger_isPass->at(i);}
-	if (Trigger_Name->at(i).find("HLT_IsoTKMu24_v4")!=string::npos){trigger_flag_elmu+=Trigger_isPass->at(i); trigger_flag_mumu+=Trigger_isPass->at(i);}
-	if (Trigger_Name->at(i).find("HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_v")!=string::npos) trigger_flag_mumu+=Trigger_isPass->at(i);
-	if (Trigger_Name->at(i).find("HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_v")!=string::npos) trigger_flag_mumu+=Trigger_isPass->at(i);
-	if (Trigger_Name->at(i).find("HLT_Ele27_WPTight_Gsf_v")!=string::npos){trigger_flag_elmu+=Trigger_isPass->at(i); trigger_flag_elel+=Trigger_isPass->at(i);}
-	if (Trigger_Name->at(i).find("HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v")!=string::npos) trigger_flag_elel+=Trigger_isPass->at(i);
-	if (Trigger_Name->at(i).find("HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v")!=string::npos) trigger_flag_elmu+=Trigger_isPass->at(i);
-	if (Trigger_Name->at(i).find("HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_v")!=string::npos) trigger_flag_elmu+=Trigger_isPass->at(i);
-	/*cout<< "Name " << Trigger_Name->at(i)<<
-	" | PreScale " << Trigger_PreScale->at(i)<<
-	" | is Error " << Trigger_isError->at(i)<<
-	" | is Pass " << Trigger_isPass->at(i)<<
-	" | is Run " << Trigger_isRun->at(i)<< endl;*/
+      if (isData==0){  
+        for(int i=0;i < Trigger_Name->size();i++){
+          if (Trigger_Name->at(i).find("HLT_IsoMu24_v")!=string::npos){ trigger_flag_elmu+=Trigger_isPass->at(i); trigger_flag_mumu+=Trigger_isPass->at(i);}
+          if (Trigger_Name->at(i).find("HLT_IsoTKMu24_v4")!=string::npos){trigger_flag_elmu+=Trigger_isPass->at(i); trigger_flag_mumu+=Trigger_isPass->at(i);}
+          if (Trigger_Name->at(i).find("HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_v")!=string::npos) trigger_flag_mumu+=Trigger_isPass->at(i);
+          if (Trigger_Name->at(i).find("HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_v")!=string::npos) trigger_flag_mumu+=Trigger_isPass->at(i);
+          if (Trigger_Name->at(i).find("HLT_Ele27_WPTight_Gsf_v")!=string::npos){trigger_flag_elmu+=Trigger_isPass->at(i); trigger_flag_elel+=Trigger_isPass->at(i);}
+          if (Trigger_Name->at(i).find("HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v")!=string::npos) trigger_flag_elel+=Trigger_isPass->at(i);
+          if (Trigger_Name->at(i).find("HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v")!=string::npos) trigger_flag_elmu+=Trigger_isPass->at(i);
+          if (Trigger_Name->at(i).find("HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_v")!=string::npos) trigger_flag_elmu+=Trigger_isPass->at(i);
+          /*cout<< "Name " << Trigger_Name->at(i)<<
+          " | PreScale " << Trigger_PreScale->at(i)<<
+          " | is Error " << Trigger_isError->at(i)<<
+          " | is Pass " << Trigger_isPass->at(i)<<
+          " | is Run " << Trigger_isRun->at(i)<< endl;*/
+        }
+      } else {
+        for(int i=0;i < Trigger_Name->size();i++){
+          if (Trigger_Name->at(i).find("HLT_IsoMu24_v")!=string::npos){ trigger_flag_elmu+=Trigger_isPass->at(i); trigger_flag_mumu+=Trigger_isPass->at(i);}
+          if (Trigger_Name->at(i).find("HLT_IsoTKMu24_v4")!=string::npos){trigger_flag_elmu+=Trigger_isPass->at(i); trigger_flag_mumu+=Trigger_isPass->at(i);}
+          if (Trigger_Name->at(i).find("HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_v")!=string::npos) trigger_flag_mumu+=Trigger_isPass->at(i);
+          if (Trigger_Name->at(i).find("HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_v")!=string::npos) trigger_flag_mumu+=Trigger_isPass->at(i);
+          if (Trigger_Name->at(i).find("HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v")!=string::npos) trigger_flag_mumu+=Trigger_isPass->at(i);
+          if (Trigger_Name->at(i).find("HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v")!=string::npos) trigger_flag_mumu+=Trigger_isPass->at(i);
+          if(isSingle) {if (Trigger_Name->at(i).find("HLT_Ele27_WPTight_Gsf_v")!=string::npos){trigger_flag_elmu+=Trigger_isPass->at(i); trigger_flag_elel+=Trigger_isPass->at(i);}}
+          if(isSingle==0){if (Trigger_Name->at(i).find("HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v")!=string::npos) trigger_flag_elel+=Trigger_isPass->at(i);}
+          if (Trigger_Name->at(i).find("HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v")!=string::npos) trigger_flag_elmu+=Trigger_isPass->at(i);
+          if (Trigger_Name->at(i).find("HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_v")!=string::npos) trigger_flag_elmu+=Trigger_isPass->at(i);
+          if (Trigger_Name->at(i).find("HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v")!=string::npos) trigger_flag_elmu+=Trigger_isPass->at(i);
+          if (Trigger_Name->at(i).find("HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_v")!=string::npos) trigger_flag_elmu+=Trigger_isPass->at(i);
+          /*cout<< "Name " << Trigger_Name->at(i)<<
+          " | PreScale " << Trigger_PreScale->at(i)<<
+          " | is Error " << Trigger_isError->at(i)<<
+          " | is Pass " << Trigger_isPass->at(i)<<
+          " | is Run " << Trigger_isRun->at(i)<< endl;*/
+        }
+
       }
       int metfilter_flag = 0;
+      //cout<<"diel : "<< trigger_flag_elel <<" | dimu : " <<trigger_flag_mumu<<" | elmu : "<<trigger_flag_elmu <<endl;
       //cout<<"########MET filter line ##########"<<endl;
       for (int i=0;i<METFilter_Name->size();i++){
 	if (METFilter_Name->at(i).find("Flag_HBHENoiseFilter")!=string::npos) {
@@ -116,6 +156,7 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
 	if (METFilter_Name->at(i).find("Flag_goodVertices")!=string::npos) metfilter_flag+=METFilter_isPass->at(i);
 	if (METFilter_Name->at(i).find("Flag_chargedHadronTrackResolutionFilter")!=string::npos) metfilter_flag+=METFilter_isPass->at(i);
 	if (METFilter_Name->at(i).find("Flag_EcalDeadCellTriggerPrimitiveFilter")!=string::npos) metfilter_flag+=METFilter_isPass->at(i);
+	if (isData) {if (METFilter_Name->at(i).find("Flag_eeBadScFilter")!=string::npos) metfilter_flag+=METFilter_isPass->at(i);}
 	/*cout<< "Name " << METFilter_Name->at(i)<<
 	" | is Error " << METFilter_isError->at(i)<<
 	" | is Pass " << METFilter_isPass->at(i)<<
@@ -124,7 +165,8 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
       }
       //cout<<metfilter_flag <<" : MET filter"<<std::endl;
       //cout<<trigger_flag_elel <<" : triggerfilter"<<std::endl;
-      if (metfilter_flag!=7) continue;
+      if(isData==0 && metfilter_flag!=7) continue;
+      if(isData==1 && metfilter_flag!=8) continue;
       if (trigger_flag_elel==0) continue;
       //cout<<"hello"<<endl;
       //cout<<"########MET filter Add line ##########"<<endl;
@@ -132,6 +174,7 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
 	/*cout<< "Name "<<METFilterAdd_Name->at(i)<<
 	" | is Pass " <<METFilterAdd_isPass->at(i)<<endl;*/
       }
+      //cout<<"dgb"<<endl;
       
       __tot_evt++;
       ////////////////////////////////////////
@@ -161,16 +204,16 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
 	     subpt_index_ele = i;
 	     subpt=ele->Pt();
 	   }
+	   TightEle.push_back(*ele);
 	 } 
       }
-      leading_ele = (TLorentzVector*) Elec->At(leadpt_index_ele);	 
-      sub_ele = (TLorentzVector*) Elec->At(subpt_index_ele);
 	   
       int third_ele_veto=0;
       for(int i = 0; i < Elec->GetEntries(); ++i ){
          if(i==subpt_index_ele) continue;
          if(i==leadpt_index_ele) continue;
-	 if(Elec_SCB_Veto->at(i)==true){
+         ele =(TLorentzVector*)Elec->At(i);
+	 if(Elec_SCB_Veto->at(i)==true&&ele->Pt()>20&&abs(ele->Eta())<2.4){
 	   third_ele_veto=1;
 	 }
       }
@@ -188,6 +231,7 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
 	   
  	 }
       }
+      //cout<<"dgbele"<<endl;
       TLorentzVector* met;
       for(int i = 0; i < MET->GetEntries(); ++i )
       {
@@ -199,13 +243,17 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
       TLorentzVector* metcleancor;
       for(int i = 0; i < METMUCleanCor->GetEntries(); ++i )
       {
-         metcleancor = (TLorentzVector*)METMUCleanCor->At(i);
+	 if (isData) metcleancor = (TLorentzVector*)METMUEGCleanCor->At(i);
+         else metcleancor = (TLorentzVector*)METMUCleanCor->At(i);
          //cout << "METtron pT " << met->Pt() << endl;
          FillHisto(h_cf_metpt_select, metcleancor->Pt());
          FillHisto(h_cf_metphi_select, metcleancor->Phi());
       }
-      metcleancor = (TLorentzVector*)METMUCleanCor->At(0);
-      
+       
+      if(isData){ if (METMUEGCleanCor->GetEntries()>0)metcleancor = (TLorentzVector*)METMUEGCleanCor->At(0);}
+      else {if (METMUCleanCor->GetEntries()>0)metcleancor = (TLorentzVector*)METMUCleanCor->At(0);}
+      //cout<<metcleancor->Pt()<<"the met "<<endl; 
+      //cout<<"dgbmet"<<endl;
       
       TLorentzVector* muon;
       TLorentzVector* leading_muon;
@@ -218,7 +266,7 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
       for(int i = 0; i < Muon->GetEntries(); ++i )
       {
          muon = (TLorentzVector*)Muon->At(i);
-	 if (Muon_isLoose->at(i)==true&& Muon_PFIsodBeta04->at(i) < 0.25 ) third_muon_veto=1;
+	 if (Muon_isLoose->at(i)==true&& Muon_PFIsodBeta04->at(i) < 0.25&& muon->Pt()>20 && abs(muon->Eta())<2.4 ) third_muon_veto=1;
 	 if (leadpt_muon<muon->Pt()){
 	   subpt_index_muon = leadpt_index_muon;
 	   subpt_muon = leadpt_muon;
@@ -280,9 +328,10 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
            FillHisto(h_cf_muoneta_sub, sub_muon->Eta());
            FillHisto(h_cf_muonphi_sub, sub_muon->Phi());
 	   //cout<< "leading muon pt : "<<leading_muon->Pt()<<" | subleading muon pt : "<<sub_muon->Pt()<<endl; 
-	   
+	   TightMuon.push_back(*muon);
 	 }
       }	 
+      //cout<<"dgbmuon"<<endl;
       TLorentzVector* jet;
       TLorentzVector* leading_jet;
       TLorentzVector* sub_jet;
@@ -292,11 +341,21 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
       float subpt_jet=0.0;
       int number_of_jet=0;
       int number_of_bjet=0;
+      int jet_clearing_flag;
       for(int i = 0; i < Jet->GetEntries(); ++i )
       {
          jet = (TLorentzVector*)Jet->At(i);
+         jet_clearing_flag=0;
 	 //cout<<"???"<<jet->DeltaR()<<endl;
          //cout << "METtron pT " << met->Pt() << endl;
+         for (int j =0;j<TightEle.size();j++){
+	   if (jet->DeltaR(TightEle.at(j))<0.4){ jet_clearing_flag =1; break;}
+	 }
+         if(jet_clearing_flag) continue;
+         for (int j =0;j<TightMuon.size();j++){
+	   if (jet->DeltaR(TightMuon.at(j))<0.4){ jet_clearing_flag =1; break;}
+	 }
+         if(jet_clearing_flag) continue;
 	 if (Jet_PFId->at(i) > 0 && jet->Pt()>30 && TMath::Abs(jet->Eta())<2.4){
 	   if (leadpt_jet<jet->Pt()){
 	     subpt_index_jet = leadpt_index_jet;
@@ -326,15 +385,18 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
 	 }
 	 
       }
-      leading_jet = (TLorentzVector*) Jet->At(leadpt_index_jet);	 
-      sub_jet = (TLorentzVector*) Jet->At(subpt_index_jet);
       //double w_pileup = puweight->weight(PileUp_Count_Intime);
-
+      //cout<<"dgbjte"<<endl;
+      if(METMUCleanCor->GetEntries()==0) continue;
       if(number_of_tight_ele<2)continue;
       if(third_ele_veto==1)continue;
       if(third_muon_veto==1)continue;
       if(number_of_jet<2)continue;
       if(number_of_bjet<1)continue;
+      leading_ele = (TLorentzVector*) Elec->At(leadpt_index_ele);	 
+      sub_ele = (TLorentzVector*) Elec->At(subpt_index_ele);
+      leading_jet = (TLorentzVector*) Jet->At(leadpt_index_jet);	 
+      sub_jet = (TLorentzVector*) Jet->At(subpt_index_jet);
       if (Elec_Charge->at(leadpt_index_ele)!=Elec_Charge->at(subpt_index_ele)){
 	if(leading_ele->Pt()>25&&sub_ele->Pt()>20){
 	  mother_ele.SetVect(leading_ele->Vect()+sub_ele->Vect());	  
@@ -348,7 +410,6 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
 	      FillHisto(h_cf_elept_sub,sub_ele->Pt(),w_pileup);	      
 	      FillHisto(h_cf_eleeta_sub,sub_ele->Eta(),w_pileup);	      
 	      FillHisto(h_cf_elephi_sub,sub_ele->Phi(),w_pileup);
-	      
 	      FillHisto(h_cf_ele_invm,mother_ele.M(),w_pileup);	      
 	      
 	      FillHisto(h_cf_jetpt_leading,leading_jet->Pt(),w_pileup);	      
@@ -458,7 +519,13 @@ void ssb_analysis::DeclareHistos()
    h_cf_jetpt_sub      = new TH1D(Form("_h_cf_jetpt_sub_leading_"),Form("sub leading Jet pT"), 1000, 0, 1000); h_cf_jetpt_sub->Sumw2();
    h_cf_jeteta_sub     = new TH1D(Form("_h_cf_jeteta_sub_leading_"),Form("sub leading Jet eta"), 1000, -5, 5); h_cf_jeteta_sub->Sumw2();
    h_cf_jetphi_sub     = new TH1D(Form("_h_cf_jetphi_sub_leading_"),Form("sub leading Jet phi"), 1000, -5 ,5); h_cf_jetphi_sub->Sumw2();
-   h_cf_pu_intime      = new TH1D(Form("_h_cf_pu_intime"),"",100,0,1); h_cf_pu_intime->Sumw2();   
+   h_cf_ele_invm       = new TH1D(Form("_h_cf_ele_invm_"),"",1000,0,1000); h_cf_ele_invm->Sumw2();   
+   h_cf_pu_intime      = new TH1D(Form("_h_cf_pu_intime"),"",100,0,100); h_cf_pu_intime->Sumw2();   
+   h_cf_pu_pv          = new TH1D(Form("_h_cf_pu_pv"),"",100,0,100); h_cf_pu_pv->Sumw2();   
+   h_cf_pu_interaction = new TH1D(Form("_h_cf_pu_interaction"),"",100,0,100); h_cf_pu_interaction->Sumw2();   
+   h_cf_pu_intime_w    = new TH1D(Form("_h_cf_pu_intime_w"),"",100,0,100); h_cf_pu_intime_w->Sumw2();   
+   h_cf_pu_pv_w        = new TH1D(Form("_h_cf_pu_pv_w"),"",100,0,100); h_cf_pu_pv_w->Sumw2();   
+   h_cf_pu_interaction_w= new TH1D(Form("_h_cf_pu_interaction_w"),"",100,0,100); h_cf_pu_interaction_w->Sumw2();   
    h_cf_PVcount        = new TH1D(Form("_h_cf_pv_count"),"",100,0,100); h_cf_PVcount->Sumw2();   
 
 
