@@ -128,8 +128,8 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
           if (Trigger_Name->at(i).find("HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_v")!=string::npos) trigger_flag_mumu+=Trigger_isPass->at(i);
           if (Trigger_Name->at(i).find("HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v")!=string::npos) trigger_flag_mumu+=Trigger_isPass->at(i);
           if (Trigger_Name->at(i).find("HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v")!=string::npos) trigger_flag_mumu+=Trigger_isPass->at(i);
-          if(isSingle) {if (Trigger_Name->at(i).find("HLT_Ele27_WPTight_Gsf_v")!=string::npos){trigger_flag_elmu+=Trigger_isPass->at(i); trigger_flag_elel+=Trigger_isPass->at(i);}}
-          if(isSingle==0){if (Trigger_Name->at(i).find("HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v")!=string::npos) trigger_flag_elel+=Trigger_isPass->at(i);}
+          if (Trigger_Name->at(i).find("HLT_Ele27_WPTight_Gsf_v")!=string::npos){trigger_flag_elmu+=Trigger_isPass->at(i); trigger_flag_elel+=Trigger_isPass->at(i);}
+          if (Trigger_Name->at(i).find("HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v")!=string::npos) trigger_flag_elel+=Trigger_isPass->at(i);
           if (Trigger_Name->at(i).find("HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v")!=string::npos) trigger_flag_elmu+=Trigger_isPass->at(i);
           if (Trigger_Name->at(i).find("HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_v")!=string::npos) trigger_flag_elmu+=Trigger_isPass->at(i);
           if (Trigger_Name->at(i).find("HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v")!=string::npos) trigger_flag_elmu+=Trigger_isPass->at(i);
@@ -143,7 +143,7 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
 
       }
       int metfilter_flag = 0;
-      //cout<<"diel : "<< trigger_flag_elel <<" | dimu : " <<trigger_flag_mumu<<" | elmu : "<<trigger_flag_elmu <<endl;
+      //cout<<"diel : "<< trigger_flag_elel <<" | is single "<<isSingle <<endl;
       //cout<<"########MET filter line ##########"<<endl;
       for (int i=0;i<METFilter_Name->size();i++){
 	if (METFilter_Name->at(i).find("Flag_HBHENoiseFilter")!=string::npos) {
@@ -168,6 +168,7 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
       if(isData==0 && metfilter_flag!=7) continue;
       if(isData==1 && metfilter_flag!=8) continue;
       if (trigger_flag_elel==0) continue;
+      if (isSingle&&trigger_flag_elel==2) continue;
       //cout<<"hello"<<endl;
       //cout<<"########MET filter Add line ##########"<<endl;
       for (int i=0;i<METFilterAdd_Name->size();i++){
@@ -386,13 +387,20 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
 	 
       }
       //double w_pileup = puweight->weight(PileUp_Count_Intime);
-      //cout<<"dgbjte"<<endl;
-      if(METMUCleanCor->GetEntries()==0) continue;
+      //cout<<"dbgstart"<<endl;
+      if(isData==0 && METMUCleanCor->GetEntries()==0) continue;
+      if(isData==1 && METMUEGCleanCor->GetEntries()==0) continue;
+      //cout<<"dbgMET"<<endl;
       if(number_of_tight_ele<2)continue;
+      //cout<<"dbgtightele"<<endl;
       if(third_ele_veto==1)continue;
+      //cout<<"dbgthirdele"<<endl;
       if(third_muon_veto==1)continue;
+      //cout<<"dbgthirdmuon"<<endl;
       if(number_of_jet<2)continue;
+      //cout<<"dbgnjet"<<endl;
       if(number_of_bjet<1)continue;
+      //cout<<"dbgnbjet"<<endl;
       leading_ele = (TLorentzVector*) Elec->At(leadpt_index_ele);	 
       sub_ele = (TLorentzVector*) Elec->At(subpt_index_ele);
       leading_jet = (TLorentzVector*) Jet->At(leadpt_index_jet);	 

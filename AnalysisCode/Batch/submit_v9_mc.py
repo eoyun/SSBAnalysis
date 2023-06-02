@@ -92,8 +92,8 @@ def MakeSeparateList(NumFiles, NumJob):
 
 #Make_CondorScr("SingleNeutrino_v1",40,40)
 if __name__ == '__main__':
-    Study = "Test_v20"
-    #Make_CondorScr("TTJets_Signal",Study,20,10)
+    Study = "Test_v21"
+    Make_CondorScr("TTJets_Signal",Study,20,10)
     Make_CondorScr("TTJets_others",Study,621,100)
     Make_CondorScr("DYJetsToLL_M_50",Study,732,100)
     Make_CondorScr("ST_tW_antitop",Study,70,70)
