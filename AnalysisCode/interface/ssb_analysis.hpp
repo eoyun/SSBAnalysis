@@ -50,8 +50,28 @@ class ssb_analysis : public SSBTree
       void End();
       
       //user define functions
+      void TLVInitial();
+      void SetUpKINObs();
       void SetOutputFileName(char *outname);
       void DeclareHistos();
+      vector<int> v_jet_idx;
+      vector<int> v_bjet_idx;
+      vector<TLorentzVector*> v_jet_TL;
+      void GetCPViolVar();
+
+      void SetUpKINObsSyst(vector<int> v_jetsys_idx, vector<TLorentzVector*> v_jetsys_TL, TLorentzVector* metsys);
+      bool isKinSol;
+      VLV v_leptons_VLV; 
+      VLV v_jets_VLV; 
+      VLV v_bjets_VLV; 
+      vector<int> v_lepidx_KIN; 
+      vector<int> v_anlepidx_KIN; 
+      vector<int> v_jetidx_KIN;
+      vector<int> v_bjetidx_KIN; 
+      vector<double> v_btagging_KIN; 
+      SSBCPViol* ssbcpviol;
+      double varO1,varO3;
+      
 
    private:
       //put variables that you want
@@ -61,6 +81,10 @@ class ssb_analysis : public SSBTree
       double luminosity;
       double crosssection;
       // vector for ChargeMisId
+      TLorentzVector *Lep, *AnLep, *Met;
+      TLorentzVector *W1, *W2;
+      TLorentzVector *Top, *AnTop, *bJet, *AnbJet, *Nu, *AnNu;
+
    public:
 
       //declare histograms
@@ -140,6 +164,58 @@ class ssb_analysis : public SSBTree
       TH1D *h_cf_pu_pv_w;
       TH1D *h_cf_pu_interaction_w;
       TH1D *h_cf_PVcount;
+      
+      TH1D *h_cf_KIN_toppt;
+      TH1D *h_cf_KIN_topmass;
+      TH1D *h_cf_KIN_topeta;
+      TH1D *h_cf_KIN_topphi;
+      TH1D *h_cf_KIN_antitoppt;
+      TH1D *h_cf_KIN_antitopmass;
+      TH1D *h_cf_KIN_antitopeta;
+      TH1D *h_cf_KIN_antitopphi;
+
+      TH1D *h_cf_KIN_W1pt;
+      TH1D *h_cf_KIN_W1eta;
+      TH1D *h_cf_KIN_W1phi;
+      TH1D *h_cf_KIN_W2toppt;
+      TH1D *h_cf_KIN_W2topeta;
+      TH1D *h_cf_KIN_W2topphi;
+
+      TH1D *h_cf_KIN_bjetpt;
+      TH1D *h_cf_KIN_bjeteta;
+      TH1D *h_cf_KIN_bjetphi;
+      TH1D *h_cf_KIN_antibjetpt;
+      TH1D *h_cf_KIN_antibjeteta;
+      TH1D *h_cf_KIN_antibjetphi;
+
+      TH1D *h_cf_KIN_Nupt;
+      TH1D *h_cf_KIN_Nueta;
+      TH1D *h_cf_KIN_Nuphi;
+      TH1D *h_cf_KIN_antiNupt;
+      TH1D *h_cf_KIN_antiNueta;
+      TH1D *h_cf_KIN_antiNuphi;
+
+      TH1D *h_cf_KIN_leading_elept;
+      TH1D *h_cf_KIN_leading_eleeta;
+      TH1D *h_cf_KIN_leading_elephi;
+      TH1D *h_cf_KIN_subleading_elept;
+      TH1D *h_cf_KIN_subleading_eleeta;
+      TH1D *h_cf_KIN_subleading_elephi;
+
+      TH1D *h_cf_KIN_mu_invm_ll;
+
+      TH1D *h_cf_KIN_metpt;
+      TH1D *h_cf_KIN_metphi;
+
+      TH1D *h_cf_KIN_leading_jetpt;
+      TH1D *h_cf_KIN_leading_jeteta;
+      TH1D *h_cf_KIN_leading_jetphi;
+      TH1D *h_cf_KIN_subleading_jetpt;
+      TH1D *h_cf_KIN_subleading_jeteta;
+      TH1D *h_cf_KIN_subleading_jetphi;
+      
+      TH1D *h_cf_KIN_O1;
+      TH1D *h_cf_KIN_O3;
 };
 #endif
 

@@ -51,7 +51,7 @@ def Make_CondorScr(sampleName,outputName,NumFileList,NumJob) :
         f1.write('# Unix submit description file\n')
         f1.write('Universe = vanilla\n')
         f1.write('Executable = ./%s/%s_%s.sh\n'%(outputName,SampleFile,idx_))
-        f1.write('request_memory = 500 \n')
+        f1.write('request_memory = 1024 \n')
         f1.write('should_transfer_files   = Yes\n')
         f1.write('Output      = ./%s/%s/%s_%s.output\n'%(outputName,sampleName,SampleFile,idx_))
         f1.write('error       = ./%s/%s/errors_%s_%s.txt\n'%(outputName,sampleName,SampleFile,idx_))
@@ -92,7 +92,7 @@ def MakeSeparateList(NumFiles, NumJob):
 
 #Make_CondorScr("SingleNeutrino_v1",40,40)
 if __name__ == '__main__':
-    Study = "Test_v21"
+    Study = "Test_v27"
     Make_CondorScr("TTJets_Signal",Study,20,10)
     Make_CondorScr("TTJets_others",Study,621,100)
     Make_CondorScr("DYJetsToLL_M_50",Study,732,100)

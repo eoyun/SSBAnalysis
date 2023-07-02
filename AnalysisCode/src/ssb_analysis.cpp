@@ -18,6 +18,22 @@
 
 using namespace std;
 
+void ssb_analysis::TLVInitial()
+{
+
+
+
+
+   Top = new TLorentzVector();
+   AnTop = new TLorentzVector();
+   bJet = new TLorentzVector();
+   AnbJet = new TLorentzVector();
+   Nu = new TLorentzVector();
+   AnNu = new TLorentzVector();
+   W1 = new TLorentzVector();
+   W2 = new TLorentzVector();
+   Met = new TLorentzVector();
+}
 
 void ssb_analysis::Loop( char *logfile, string sampleName )
 {
@@ -169,6 +185,7 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
       if(isData==1 && metfilter_flag!=8) continue;
       if (trigger_flag_elel==0) continue;
       if (isSingle&&trigger_flag_elel==2) continue;
+      TLVInitial();
       //cout<<"hello"<<endl;
       //cout<<"########MET filter Add line ##########"<<endl;
       for (int i=0;i<METFilterAdd_Name->size();i++){
@@ -185,9 +202,9 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
       TLorentzVector mother_ele;
       TLorentzVector* leading_ele;
       TLorentzVector* sub_ele;
-      int leadpt_index_ele=0;
+      int leadpt_index_ele=-1;
       float leadpt=0.0;
-      int subpt_index_ele=0;
+      int subpt_index_ele=-1;
       float subpt=0.0;
       int number_of_tight_ele=0;
       for(int i = 0; i < Elec->GetEntries(); ++i ){
@@ -255,13 +272,15 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
       else {if (METMUCleanCor->GetEntries()>0)metcleancor = (TLorentzVector*)METMUCleanCor->At(0);}
       //cout<<metcleancor->Pt()<<"the met "<<endl; 
       //cout<<"dgbmet"<<endl;
-      
+      Met = (TLorentzVector*)metcleancor;
+
+      //cout<<Met->Pt()<<": MET | "<<metcleancor->Pt()<<endl;
       TLorentzVector* muon;
       TLorentzVector* leading_muon;
       TLorentzVector* sub_muon;
-      int leadpt_index_muon=0;
+      int leadpt_index_muon=-1;
       float leadpt_muon=0.0;
-      int subpt_index_muon=0;
+      int subpt_index_muon=-1;
       float subpt_muon=0.0;
       int third_muon_veto=0;
       for(int i = 0; i < Muon->GetEntries(); ++i )
@@ -336,13 +355,16 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
       TLorentzVector* jet;
       TLorentzVector* leading_jet;
       TLorentzVector* sub_jet;
-      int leadpt_index_jet=0;
+      int leadpt_index_jet=-1;
       float leadpt_jet=0.0;
-      int subpt_index_jet=0;
+      int subpt_index_jet=-1;
       float subpt_jet=0.0;
       int number_of_jet=0;
       int number_of_bjet=0;
       int jet_clearing_flag;
+      v_jet_idx.clear();
+      v_jet_TL.clear();
+      v_bjet_idx.clear();
       for(int i = 0; i < Jet->GetEntries(); ++i )
       {
          jet = (TLorentzVector*)Jet->At(i);
@@ -358,6 +380,8 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
 	 }
          if(jet_clearing_flag) continue;
 	 if (Jet_PFId->at(i) > 0 && jet->Pt()>30 && TMath::Abs(jet->Eta())<2.4){
+	   v_jet_idx.push_back(i);
+	   v_jet_TL.push_back(jet);
 	   if (leadpt_jet<jet->Pt()){
 	     subpt_index_jet = leadpt_index_jet;
 	     subpt_jet = leadpt_jet;
@@ -373,6 +397,7 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
            FillHisto(h_cf_jeteta,jet->Eta());
            FillHisto(h_cf_jetphi,jet->Phi());
 	   if (Jet_bDisc->at(i)>0.8484){
+	     v_bjet_idx.push_back(i);
 	     number_of_bjet+=1;
              FillHisto(h_cf_bjetpt_select, jet->Pt());
              FillHisto(h_cf_bjeteta_select,jet->Eta());
@@ -386,6 +411,7 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
 	 }
 	 
       }
+
       //double w_pileup = puweight->weight(PileUp_Count_Intime);
       //cout<<"dbgstart"<<endl;
       if(isData==0 && METMUCleanCor->GetEntries()==0) continue;
@@ -411,6 +437,14 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
 	  mother_ele.SetE(leading_ele->E()+sub_ele->E());
 	  if(mother_ele.M()>20 &&( mother_ele.M()<76 || mother_ele.M()>106)){
 	    if (metcleancor->Pt()>40){
+	      if(Elec_Charge->at(leadpt_index_ele)>0){
+                 Lep = (TLorentzVector*)Elec->At(leadpt_index_ele);
+                 AnLep = (TLorentzVector*)Elec->At(subpt_index_ele);
+              } else {
+                 Lep = (TLorentzVector*)Elec->At(subpt_index_ele);
+                 AnLep = (TLorentzVector*)Elec->At(leadpt_index_ele);
+	      }	
+ 	      SetUpKINObs();
 	      FillHisto(h_cf_elept_leading,leading_ele->Pt(),w_pileup);	      
 	      FillHisto(h_cf_eleeta_leading,leading_ele->Eta(),w_pileup);	      
 	      FillHisto(h_cf_elephi_leading,leading_ele->Phi(),w_pileup);
@@ -432,7 +466,55 @@ void ssb_analysis::Loop( char *logfile, string sampleName )
               FillHisto(h_cf_metpt_evt, metcleancor->Pt(),w_pileup);
               FillHisto(h_cf_metphi_evt, metcleancor->Phi(),w_pileup);
 	      FillHisto(h_cf_PVcount,PV_Count);
-	    }
+	      if(isKinSol){
+		//cout<<Top->M()<<endl;
+                FillHisto(h_cf_KIN_toppt, Top->Pt(), w_pileup);
+                FillHisto(h_cf_KIN_topmass, Top->M(), w_pileup);
+                FillHisto(h_cf_KIN_topeta, Top->Eta(), w_pileup);
+                FillHisto(h_cf_KIN_topphi, Top->Phi(), w_pileup);
+                FillHisto(h_cf_KIN_antitoppt, AnTop->Pt(), w_pileup);
+                FillHisto(h_cf_KIN_antitopmass, AnTop->M(), w_pileup);
+                FillHisto(h_cf_KIN_antitopeta, AnTop->Eta(), w_pileup);
+                FillHisto(h_cf_KIN_antitopphi, AnTop->Phi(), w_pileup);
+
+                FillHisto(h_cf_KIN_bjetpt, bJet->Pt(), w_pileup);
+                FillHisto(h_cf_KIN_bjeteta, bJet->Eta(), w_pileup);
+                FillHisto(h_cf_KIN_bjetphi, bJet->Phi(), w_pileup);
+                FillHisto(h_cf_KIN_antibjetpt, AnbJet->Pt(), w_pileup);
+                FillHisto(h_cf_KIN_antibjeteta, AnbJet->Eta(), w_pileup);
+                FillHisto(h_cf_KIN_antibjetphi, AnbJet->Phi(), w_pileup);
+
+                FillHisto(h_cf_KIN_Nupt, Nu->Pt(), w_pileup);
+                FillHisto(h_cf_KIN_Nueta, Nu->Eta(), w_pileup);
+                FillHisto(h_cf_KIN_Nuphi, Nu->Phi(), w_pileup);
+                FillHisto(h_cf_KIN_antiNupt, AnNu->Pt(), w_pileup);
+                FillHisto(h_cf_KIN_antiNueta, AnNu->Eta(), w_pileup);
+                FillHisto(h_cf_KIN_antiNuphi, AnNu->Phi(), w_pileup);
+                
+                FillHisto(h_cf_KIN_leading_elept, leading_ele->Pt(), w_pileup);
+                FillHisto(h_cf_KIN_leading_eleeta, leading_ele->Eta(), w_pileup);
+                FillHisto(h_cf_KIN_leading_elephi, leading_ele->Phi(), w_pileup);
+                FillHisto(h_cf_KIN_subleading_elept, sub_ele->Pt(), w_pileup);
+                FillHisto(h_cf_KIN_subleading_eleeta, sub_ele->Eta(), w_pileup);
+                FillHisto(h_cf_KIN_subleading_elephi, sub_ele->Phi(), w_pileup);
+
+                FillHisto(h_cf_KIN_mu_invm_ll, mother_ele.M(), w_pileup);
+
+                FillHisto(h_cf_KIN_metpt, met->Pt(), w_pileup);
+                FillHisto(h_cf_KIN_metphi, met->Phi(), w_pileup);
+
+                FillHisto(h_cf_KIN_leading_jetpt, leading_jet->Pt(), w_pileup);
+                FillHisto(h_cf_KIN_leading_jeteta, leading_jet->Eta(), w_pileup);
+                FillHisto(h_cf_KIN_leading_jetphi, leading_jet->Phi(), w_pileup);
+                FillHisto(h_cf_KIN_subleading_jetpt, sub_jet->Pt(), w_pileup);
+                FillHisto(h_cf_KIN_subleading_jeteta, sub_jet->Eta(), w_pileup);
+                FillHisto(h_cf_KIN_subleading_jetphi, sub_jet->Phi(), w_pileup);
+	        GetCPViolVar();
+	        FillHisto(h_cf_KIN_O1,varO1,w_pileup);
+	        FillHisto(h_cf_KIN_O3,varO3,w_pileup);
+		
+	      }		      
+	    }	  
 	  }	  
 	}
       }
@@ -536,6 +618,50 @@ void ssb_analysis::DeclareHistos()
    h_cf_pu_interaction_w= new TH1D(Form("_h_cf_pu_interaction_w"),"",100,0,100); h_cf_pu_interaction_w->Sumw2();   
    h_cf_PVcount        = new TH1D(Form("_h_cf_pv_count"),"",100,0,100); h_cf_PVcount->Sumw2();   
 
+   h_cf_KIN_toppt       = new TH1D(Form("_h_evt_KIN_toppt_"),Form("Top pT"), 1000, 0, 1000); h_cf_KIN_toppt->Sumw2();
+   h_cf_KIN_topmass     = new TH1D(Form("_h_evt_KIN_topmass_"),Form("Top mass"), 1000, 0, 1000); h_cf_KIN_topmass->Sumw2();
+   h_cf_KIN_topeta      = new TH1D(Form("_h_evt_KIN_topeta_"),Form("Top eta"), 1000, -5, 5); h_cf_KIN_topeta->Sumw2();
+   h_cf_KIN_topphi      = new TH1D(Form("_h_evt_KIN_topphi_"),Form("Top phi"), 1000, -5, 5);
+   h_cf_KIN_antitoppt   = new TH1D(Form("_h_evt_KIN_antitoppt_"),Form("AntiTop pT"), 1000, 0, 1000);
+   h_cf_KIN_antitopeta  = new TH1D(Form("_h_evt_KIN_antitopeta_"),Form("AntiTop eta"), 1000, -5, 5);
+   h_cf_KIN_antitopphi  = new TH1D(Form("_h_evt_KIN_antitopphi_"),Form("AntiTop phi"), 1000, -5, 5);
+   h_cf_KIN_antitopmass     = new TH1D(Form("_h_evt_KIN_antitopmass_"),Form("AntiTop mass"), 1000, 0, 1000);
+
+   h_cf_KIN_bjetpt        = new TH1D(Form("_h_evt_KIN_bjetpt_"),Form("Bjet pT "), 1000, 0, 1000);
+   h_cf_KIN_bjeteta       = new TH1D(Form("_h_evt_KIN_bjeteta_"),Form("Bjet eta "), 1000, -5, 5);
+   h_cf_KIN_bjetphi       = new TH1D(Form("_h_evt_KIN_bjetphi_"),Form("Bjet phi "), 1000, -5, 5);
+   h_cf_KIN_antibjetpt    = new TH1D(Form("_h_evt_KIN_antibjetpt_"),Form("Bjet pT "), 1000, 0, 1000);
+   h_cf_KIN_antibjeteta   = new TH1D(Form("_h_evt_KIN_antibjeteta_"),Form("Bjet eta "), 1000, -5, 5);
+   h_cf_KIN_antibjetphi   = new TH1D(Form("_h_evt_KIN_antibjetphi_"),Form("Bjet phi "), 1000, -5, 5);
+
+   h_cf_KIN_Nupt        = new TH1D(Form("_h_evt_KIN_Nupt_"),Form("Nu pT "), 1000, 0, 1000);
+   h_cf_KIN_Nueta       = new TH1D(Form("_h_evt_KIN_Nueta_"),Form("Nu eta "), 1000, -5, 5);
+   h_cf_KIN_Nuphi       = new TH1D(Form("_h_evt_KIN_Nuphi_"),Form("Nu phi "), 1000, -5, 5);
+   h_cf_KIN_antiNupt    = new TH1D(Form("_h_evt_KIN_AntiNupt_"),Form("Nu pT "), 1000, 0, 1000);
+   h_cf_KIN_antiNueta   = new TH1D(Form("_h_evt_KIN_AntiNueta_"),Form("Nu eta "), 1000, -5, 5);
+   h_cf_KIN_antiNuphi   = new TH1D(Form("_h_evt_KIN_AntiNuphi_"),Form("Nu phi "), 1000, -5, 5);
+
+   h_cf_KIN_leading_elept    = new TH1D(Form("_h_evt_KIN_leading_elept_"),Form("Elec pT (af cut)"), 500, 0, 500);
+   h_cf_KIN_leading_eleeta   = new TH1D(Form("_h_evt_KIN_leading_eleeta_"),Form("Elec eta (af cut)"), 1000, -5, 5); 
+   h_cf_KIN_leading_elephi   = new TH1D(Form("_h_evt_KIN_leading_elephi_"),Form("Elec phi (af cut)"), 1000, -5, 5);
+   h_cf_KIN_subleading_elept    = new TH1D(Form("_h_evt_KIN_subleading_elept_"),Form("Elec pT (af cut)"), 500, 0, 500);
+   h_cf_KIN_subleading_eleeta   = new TH1D(Form("_h_evt_KIN_subleading_eleeta_"),Form("Elec eta (af cut)"), 1000, -5, 5); 
+   h_cf_KIN_subleading_elephi   = new TH1D(Form("_h_evt_KIN_subleading_elephi_"),Form("Elec phi (af cut)"), 1000, -5, 5);
+
+   h_cf_KIN_mu_invm_ll      = new TH1D(Form("_h_evt_KIN_mu_invm_ll_"),Form("Invariant Mass of Dimuon"), 500, 0, 500);
+
+   h_cf_KIN_metpt    = new TH1D(Form("_h_evt_KIN_metpt_"), Form("MET pT (evt)"), 1000, 0, 500);
+   h_cf_KIN_metphi   = new TH1D(Form("_h_evt_KIN_metphi_"), Form("MET phi (evt)"), 1000, -5, 5);
+
+   h_cf_KIN_leading_jetpt       = new TH1D(Form("_h_evt_KIN_leading_jetpt_"),Form("Leading jet pT"), 1000, 0, 1000);
+   h_cf_KIN_leading_jeteta      = new TH1D(Form("_h_evt_KIN_leading_jeteta_"),Form("Leading jet eta"), 1000, -5, 5);
+   h_cf_KIN_leading_jetphi      = new TH1D(Form("_h_evt_KIN_leading_jetphi_"),Form("Leading jet phi"), 1000, -5, 5);
+   h_cf_KIN_subleading_jetpt    = new TH1D(Form("_h_evt_KIN_subleading_jetpt_"),Form("Subleading jet pT"), 1000, 0, 1000);
+   h_cf_KIN_subleading_jeteta   = new TH1D(Form("_h_evt_KIN_subleading_jeteta_"),Form("Subleading jet eta"), 1000, -5, 5);
+   h_cf_KIN_subleading_jetphi   = new TH1D(Form("_h_evt_KIN_subleading_jetphi_"),Form("Subleading jet phi"), 1000, -5, 5);
+
+   h_cf_KIN_O1       = new TH1D(Form("_h_evt_KIN_O1_"),Form("O1"), 1000, -5, 5); h_cf_KIN_O3->Sumw2();
+   h_cf_KIN_O3       = new TH1D(Form("_h_evt_KIN_O3_"),Form("O3"), 1000, -5, 5); h_cf_KIN_O1->Sumw2();
 
 }
 
@@ -552,3 +678,71 @@ void ssb_analysis::SetOutputFileName(char *outname)
 }
 
 
+void ssb_analysis::SetUpKINObs()
+{
+   isKinSol=false;
+   v_leptons_VLV.clear();
+   v_jets_VLV.clear();
+   v_bjets_VLV.clear();
+   v_lepidx_KIN.clear();
+   v_anlepidx_KIN.clear();
+   v_jetidx_KIN.clear();
+   v_bjetidx_KIN.clear();
+   v_btagging_KIN.clear();
+   /// lepton ///
+   v_leptons_VLV.push_back(common::TLVtoLV(*Lep));
+   v_lepidx_KIN.push_back(0);
+   v_leptons_VLV.push_back(common::TLVtoLV(*AnLep));
+   v_anlepidx_KIN.push_back(1);
+   //cout << "jet info. for kinematic solver"  << endl;
+   //cout << v_jet_idx.size() << " " << v_jet_TL.size() << endl;
+   const KinematicReconstruction* kinematicReconstruction(0); 
+   kinematicReconstruction = new KinematicReconstruction(1, true);
+   
+   const LV met_LV = common::TLVtoLV(*Met);
+   
+   for (int ijet = 0; ijet < v_jet_idx.size(); ++ijet)
+   {
+      int idx_jet = v_jet_idx[ijet];
+      if(Jet_bDisc->at(idx_jet)  > 0.8484 ){
+         v_bjets_VLV.push_back(common::TLVtoLV(*v_jet_TL[ijet]));
+         //v_bjetidx_KIN.push_back(v_jet_idx[ijet]);
+         v_bjetidx_KIN.push_back(ijet);
+      }
+      v_jets_VLV.push_back(common::TLVtoLV(*v_jet_TL[ijet]));
+      v_jetidx_KIN.push_back(ijet);
+      v_btagging_KIN.push_back(Jet_bDisc->at(idx_jet));
+    }
+    KinematicReconstructionSolutions kinematicReconstructionSolutions = kinematicReconstruction->solutions(v_lepidx_KIN,v_anlepidx_KIN, v_jetidx_KIN,  v_bjetidx_KIN,  v_leptons_VLV, v_jets_VLV, v_btagging_KIN, met_LV);
+    //cout << "Num Sol : " << kinematicReconstructionSolutions.numberOfSolutions() << endl;
+    //cout << "MET ? " << met_LV.pt() << endl;
+    //cout << "MET Pt ? " << Met->Pt() << endl;
+    if (kinematicReconstructionSolutions.numberOfSolutions())
+    {
+       isKinSol= true;
+       LV top1 = kinematicReconstructionSolutions.solution().top();
+       LV top2 = kinematicReconstructionSolutions.solution().antiTop();
+       LV bjet1 = kinematicReconstructionSolutions.solution().bjet();
+       LV bjet2 = kinematicReconstructionSolutions.solution().antiBjet();
+       LV neutrino1 = kinematicReconstructionSolutions.solution().neutrino();
+       LV neutrino2 = kinematicReconstructionSolutions.solution().antiNeutrino();
+       //kinematicReconstructionSolutions.solution().print();
+       //Top = new TLorentzVector(common::LVtoTLV(top1));   
+       Top       = new TLorentzVector(common::LVtoTLV(top1));
+       AnTop     = new TLorentzVector(common::LVtoTLV(top2));
+       bJet      = new TLorentzVector(common::LVtoTLV(bjet1));
+       AnbJet    = new TLorentzVector(common::LVtoTLV(bjet2));
+       Nu        = new TLorentzVector(common::LVtoTLV(neutrino1));
+       AnNu      = new TLorentzVector(common::LVtoTLV(neutrino2));
+   
+       (*W1)        = (*Lep)  + (*AnNu);
+       (*W2)        = (*AnLep)  + (*Nu);
+   
+    }
+    //delete 
+    delete kinematicReconstruction;
+}
+void ssb_analysis::GetCPViolVar(){
+    varO1=ssbcpviol->getO1Vari( Top, AnTop, AnLep, Lep);
+    varO3=ssbcpviol->getO3Vari( Top, AnTop, bJet, AnbJet);
+}
